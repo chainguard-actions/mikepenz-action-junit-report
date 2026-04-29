@@ -1,6 +1,12 @@
 # mikepenz/action-junit-report
 
-Hardened GitHub Action by [Chainguard](https://www.chainguard.dev).
+Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/mikepenz/action-junit-report](https://github.com/mikepenz/action-junit-report).
+
+## Versions
+
+| Version | Tag | Upstream commit |
+|---------|-----|-----------------|
+| v6.3.1 | [`v6.3.1`](https://github.com/chainguard-actions/action-junit-report/tree/v6.3.1) | — |
 
 ## Privacy
 
