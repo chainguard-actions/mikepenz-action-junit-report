@@ -1,5 +1,6 @@
 {
   "owner": "mikepenz",
   "name": "action-junit-report",
-  "visibility": ""
+  "visibility": "internal",
+  "description": "Reports junit test results as GitHub Pull Request Check"
 }
