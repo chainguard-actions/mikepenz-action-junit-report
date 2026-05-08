@@ -2,5 +2,6 @@
   "owner": "mikepenz",
   "name": "action-junit-report",
   "visibility": "internal",
-  "description": "Reports junit test results as GitHub Pull Request Check"
+  "description": "Reports junit test results as GitHub Pull Request Check",
+  "block_publish": false
 }

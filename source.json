@@ -1,4 +1,6 @@
 {
-  "upstream": "mikepenz/action-junit-report",
-  "version": "v6.3.1"
+  "owner": "mikepenz",
+  "repo": "action-junit-report",
+  "version": "",
+  "url": "https://github.com/mikepenz/action-junit-report"
 }
