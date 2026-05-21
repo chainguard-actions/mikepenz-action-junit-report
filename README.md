@@ -8,7 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
-| v6.3.1 | [`v6.3.1`](https://github.com/chainguard-actions/action-junit-report/tree/v6.3.1) | — |
+| v6.3.1 | [`v6.3.1`](https://github.com/chainguard-actions/mikepenz--action-junit-report/tree/v6.3.1) | — |
 
 ## Privacy
 
