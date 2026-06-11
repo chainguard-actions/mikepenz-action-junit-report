@@ -1,0 +1,67 @@
+name: Test pr_id input and failure detection
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with failures
+        run: |
+          mkdir -p junit-reports
+          cat > junit-reports/TEST-prid.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="PrIdSuite" tests="3" failures="1" errors="0" skipped="0" time="2.0">
+            <testcase name="test_pass" classname="com.example.PrIdTest" time="0.5"/>
+            <testcase name="test_fail" classname="com.example.PrIdTest" time="1.0">
+              <failure message="AssertionError" type="AssertionError">Expected true but was false</failure>
+            </testcase>
+            <testcase name="test_pass2" classname="com.example.PrIdTest" time="0.5"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '**/junit-reports/TEST-prid.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          job_summary: 'false'
+          pr_id: '42'
+          include_passed: 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "3" ]; then
+            echo "FAIL: expected total=3, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected failed=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
