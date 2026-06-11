@@ -1,6 +1,6 @@
 # mikepenz/action-junit-report
 
-Reports junit test results as GitHub Pull Request Check
+Report JUnit test results as annotations on Github Pull Request [junit]
 
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/mikepenz/action-junit-report](https://github.com/mikepenz/action-junit-report).
 
