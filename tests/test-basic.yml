@@ -1,0 +1,81 @@
+name: Test basic JUnit report with passing tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create passing JUnit XML report
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-basic.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites>
+            <testsuite name="BasicSuite" tests="3" failures="0" errors="0" skipped="1" time="1.234">
+              <testcase name="testOne" classname="com.example.BasicTest" time="0.1"/>
+              <testcase name="testTwo" classname="com.example.BasicTest" time="0.2"/>
+              <testcase name="testSkipped" classname="com.example.BasicTest" time="0.0">
+                <skipped/>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-*.xml'
+          check_name: 'Basic JUnit Test Report'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          exclude_sources: 'src/generated,build'
+          check_title_template: '{{SUITE_NAME}} / {{TEST_NAME}}'
+          include_passed: 'true'
+          include_skipped: 'true'
+          job_summary: 'true'
+
+      - name: Assert total output
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected total output to be set"
+            exit 1
+          fi
+          echo "PASS: total=$ACTUAL"
+
+      - name: Assert passed output
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected passed output to be set"
+            exit 1
+          fi
+          echo "PASS: passed=$ACTUAL"
+
+      - name: Assert skipped output
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected skipped output to be set"
+            exit 1
+          fi
+          echo "PASS: skipped=$ACTUAL"
+
+      - name: Assert failed output
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected 0 failures, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: failed=$ACTUAL"

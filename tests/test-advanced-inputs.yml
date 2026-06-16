@@ -1,0 +1,58 @@
+name: Test advanced inputs - github_token, commit, skip_annotations
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with failures
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-advanced.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites>
+            <testsuite name="AdvancedSuite" tests="2" failures="1" errors="0" skipped="0" time="0.5">
+              <testcase name="testPass" classname="com.example.AdvancedTest" time="0.1"/>
+              <testcase name="testFail" classname="com.example.AdvancedTest" time="0.4">
+                <failure message="AssertionError" type="AssertionError">Expected true but was false</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          report_paths: '/tmp/junit-reports/TEST-advanced.xml'
+          check_name: 'Advanced JUnit Test Report'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          skip_annotations: 'true'
+          commit: ${{ github.sha }}
+          job_summary: 'true'
+          detailed_summary: 'true'
+
+      - name: Assert total output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected total output to be set"
+            exit 1
+          fi
+          echo "PASS: total=$ACTUAL"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected 1 failure, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: failed=$ACTUAL"

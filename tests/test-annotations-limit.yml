@@ -1,0 +1,63 @@
+name: Test annotations_limit and pr_id inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with multiple test cases
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-limit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites>
+            <testsuite name="LimitSuite" tests="5" failures="3" errors="0" skipped="0" time="2.0">
+              <testcase name="testPass1" classname="com.example.LimitTest" time="0.1"/>
+              <testcase name="testPass2" classname="com.example.LimitTest" time="0.1"/>
+              <testcase name="testFail1" classname="com.example.LimitTest" time="0.5">
+                <failure message="Failure 1" type="AssertionError">First failure</failure>
+              </testcase>
+              <testcase name="testFail2" classname="com.example.LimitTest" time="0.5">
+                <failure message="Failure 2" type="AssertionError">Second failure</failure>
+              </testcase>
+              <testcase name="testFail3" classname="com.example.LimitTest" time="0.5">
+                <failure message="Failure 3" type="AssertionError">Third failure</failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-limit.xml'
+          check_name: 'Limit JUnit Test Report'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          annotations_limit: '2'
+          pr_id: '0'
+          job_summary: 'true'
+
+      - name: Assert total output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected total output to be set"
+            exit 1
+          fi
+          echo "PASS: total=$ACTUAL"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "3" ]; then
+            echo "FAIL: expected 3 failures, got $ACTUAL"
+            exit 1
+          fi
+          echo "PASS: failed=$ACTUAL"
