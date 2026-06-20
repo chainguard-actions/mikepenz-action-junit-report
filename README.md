@@ -10,6 +10,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 |---------|-----|-----------------|
 | v6.3.1 | [`v6.3.1`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.3.1) | — |
 | v6.4.1 | [`v6.4.1`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.4.1) | [`3a81627`](https://github.com/mikepenz/action-junit-report/commit/3a81627bfac62268172037048872e8ebd4207e6d) |
+| v6.4.2 | [`v6.4.2`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.4.2) | [`d9f48fc`](https://github.com/mikepenz/action-junit-report/commit/d9f48fc87bc235f7e214acf696ca5abc0a986f16) |
 
 ## Privacy
 
