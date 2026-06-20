@@ -1,0 +1,56 @@
+name: Test fail_on_failure flag
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with a failure
+        run: |
+          mkdir -p junit-reports
+          cat > junit-reports/TEST-fail.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="FailSuite" tests="2" failures="1" errors="0" skipped="0" time="1.0">
+            <testcase name="testPass" classname="com.example.FailTest" time="0.5"/>
+            <testcase name="testFail" classname="com.example.FailTest" time="0.5">
+              <failure message="AssertionError" type="AssertionError">Expected 1 but was 2</failure>
+            </testcase>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          fail_on_failure: 'true'
+          annotate_only: 'true'
+          check_annotations: 'false'
+          job_summary: 'false'
+        continue-on-error: true
+
+      - name: Assert action failed due to test failures
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail when fail_on_failure=true and there are test failures, got outcome='$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action correctly failed due to test failures"
+
+      - name: Assert failed count is correct
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected failed=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

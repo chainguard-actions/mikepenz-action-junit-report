@@ -1,0 +1,67 @@
+name: Test custom check name and include_passed
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report
+        run: |
+          mkdir -p junit-reports
+          cat > junit-reports/TEST-custom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="CustomSuite" tests="2" failures="0" errors="0" skipped="0" time="0.9">
+            <testcase name="testAlpha" classname="com.example.CustomTest" time="0.4"/>
+            <testcase name="testBeta" classname="com.example.CustomTest" time="0.5"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          check_name: 'My Custom Test Report'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          check_annotations: 'false'
+          job_summary: 'false'
+          include_passed: 'true'
+          include_skipped: 'true'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected total=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count is zero
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected failed=0, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

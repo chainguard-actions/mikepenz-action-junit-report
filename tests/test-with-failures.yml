@@ -1,0 +1,83 @@
+name: Test JUnit report with failures
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with failures
+        run: |
+          mkdir -p junit-reports
+          cat > junit-reports/TEST-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="FailureSuite" tests="4" failures="2" errors="0" skipped="1" time="2.5">
+            <testcase name="testPass" classname="com.example.FailureTest" time="0.5"/>
+            <testcase name="testFail1" classname="com.example.FailureTest" time="0.6">
+              <failure message="AssertionError" type="AssertionError">Expected true but was false</failure>
+            </testcase>
+            <testcase name="testFail2" classname="com.example.FailureTest" time="0.7">
+              <failure message="NullPointerException" type="NullPointerException">Null pointer at line 42</failure>
+            </testcase>
+            <testcase name="testSkip" classname="com.example.FailureTest" time="0.0">
+              <skipped/>
+            </testcase>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          check_annotations: 'false'
+          job_summary: 'false'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "4" ]; then
+            echo "FAIL: expected total=4, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected passed=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected failed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert skipped count
+        env:
+          ACTUAL: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected skipped=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

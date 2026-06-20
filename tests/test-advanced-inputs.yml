@@ -1,0 +1,71 @@
+name: Test advanced inputs coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report
+        run: |
+          mkdir -p junit-reports
+          cat > junit-reports/TEST-advanced.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="AdvancedSuite" tests="2" failures="0" errors="0" skipped="0" time="0.5">
+            <testcase name="testAlpha" classname="com.example.AdvancedTest" time="0.3"/>
+            <testcase name="testBeta" classname="com.example.AdvancedTest" time="0.2"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          report_paths: '**/junit-reports/TEST-*.xml'
+          annotate_only: 'true'
+          check_annotations: 'false'
+          job_summary: 'false'
+          annotations_limit: '10'
+          check_title_template: '{{SUITE_NAME}} / {{TEST_NAME}}'
+          commit: ${{ github.sha }}
+          exclude_sources: 'src/generated,build'
+          skip_annotations: 'true'
+          pr_id: ''
+          fail_on_failure: 'false'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected total=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected failed=0, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
