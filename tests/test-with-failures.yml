@@ -1,0 +1,75 @@
+name: Test JUnit report with test failures
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with failures
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-failures.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites name="AllTests" tests="4" failures="2" errors="0" time="2.500">
+            <testsuite name="com.example.MixedTests" tests="4" failures="2" errors="0" time="2.500">
+              <testcase name="testPass1" classname="com.example.MixedTests" time="0.500"/>
+              <testcase name="testPass2" classname="com.example.MixedTests" time="0.500"/>
+              <testcase name="testFail1" classname="com.example.MixedTests" time="0.750">
+                <failure message="AssertionError: expected true but was false" type="AssertionError">
+                  AssertionError: expected true but was false
+                    at com.example.MixedTests.testFail1(MixedTests.java:42)
+                </failure>
+              </testcase>
+              <testcase name="testFail2" classname="com.example.MixedTests" time="0.750">
+                <failure message="NullPointerException" type="java.lang.NullPointerException">
+                  java.lang.NullPointerException
+                    at com.example.MixedTests.testFail2(MixedTests.java:58)
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: junit
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-*.xml'
+          check_name: 'Failures Test Report'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          job_summary: 'true'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "4" ]; then
+            echo "FAIL: expected total=4, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected failed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

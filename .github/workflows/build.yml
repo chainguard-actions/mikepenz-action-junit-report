@@ -1,0 +1,196 @@
+name: 'CI'
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name  == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: '24'
+      - name: Install NPM
+        run: |
+          npm ci
+      - name: Audit NPM
+        run: |
+          npm audit --audit-level=high
+      - name: Run NPM
+        run: |
+          npm run all
+
+  commit-dist:
+    needs: build
+    if: |
+      github.event_name == 'pull_request' &&
+      startsWith(github.head_ref, 'renovate/') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.actor == github.repository_owner || github.actor == 'renovate-mike[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: 24.x
+      - run: npm ci && npm run build && npm run package
+      - name: Commit rebuilt dist
+        env:
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "Mike Penz"
+          git config user.email "opensource-bot@mikepenz.dev"
+          git add dist/
+          git diff --staged --quiet || git commit -m "chore: rebuild dist for renovate"
+          git push "https://x-access-token:${RENOVATE_TOKEN}@github.com/${REPOSITORY}.git" "HEAD:${HEAD_REF}"
+
+  test:
+    if: >
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') &&
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: '24'
+
+      - name: Test JUnit test import
+        uses: ./
+        with:
+          check_name: Example JUnit Test Report
+          report_paths: '**/surefire-reports/TEST-*.xml'
+          include_passed: true
+          include_skipped: false
+          detailed_summary: true
+          summary: '<table><thead><tr><th> Application (src/applications) </th></tr></thead><tbody><tr><td> test </td></tr></tbody></table>'
+          job_summary_text: |
+            # Test Header for Example Junit Test Report
+            
+            This is some custom body to show in the summary.
+          check_title_template: '{{SUITE_NAME}} | {{TEST_NAME}}'
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test PyTest test import
+        uses: ./
+        with:
+          check_name: Example Pytest Report
+          report_paths: test_results/python/report_flaky.xml
+          include_passed: true
+          detailed_summary: true
+          comment: true
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Ungrouped test import
+        uses: ./
+        with:
+          check_name: Example Ungrouped Test Report
+          report_paths: test_results/multiple/*.xml
+          verbose_summary: false
+          include_passed: true
+          detailed_summary: false
+          group_reports: false
+          comment: true
+
+      - name: Test JUnit flaky test import
+        uses: ./
+        with:
+          check_name: Example JUnit Flaky Report
+          report_paths: test_results/junit-web-test/expectedRetries.xml
+          include_passed: true
+          check_retries: true
+          job_summary: true
+          detailed_summary: true
+          flaky_summary: true
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Multi test import
+        uses: ./
+        with:
+          check_name: |-
+            Example Multi JUnit Test Report
+            Example Multi Pytest Report
+          report_paths: |-
+            **/surefire-reports/TEST-*.xml
+            test_results/python/report.xml
+          summary: |-
+            <table><thead><tr><th> Application (src/applications) </th></tr></thead><tbody><tr><td> multi test </td></tr></tbody></table>
+            Custom Summary
+          check_title_template: |-
+            {{SUITE_NAME}} | {{TEST_NAME}}
+            \n
+          transformers: |
+            [{"searchValue":"::","replaceValue":"/"}]
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Nested JUnit test import
+        uses: ./
+        with:
+          check_name: Example Nested JUnit Test Report
+          report_paths: 'test_results/nested/multi-level.xml'
+          include_passed: true
+          detailed_summary: true
+          group_suite: true
+          comment: true
+          skip_annotations: true
+          check_title_template: '{{TEST_NAME}}'
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: '24'
+
+      - name: Build
+        run: npm ci && npm audit --audit-level=high && npm run build && npm run package
+
+      - name: "Build Changelog"
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@bcae7115752d4ed746ff92feb666574428a79415  # v6.2.1
+        with:
+          configuration: ".github/config/configuration.json"
+          ignorePreReleases: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
+        with:
+          subject-path: dist/index.js
+
+      - name: Create Release
+        uses: mikepenz/action-gh-release@2a00e201320fb618d8e705a736286b2e31aa48e2  # v3.0.0
+        with:
+          body: ${{steps.github_release.outputs.changelog}}
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
+          token: ${{ secrets.GITHUB_TOKEN }}

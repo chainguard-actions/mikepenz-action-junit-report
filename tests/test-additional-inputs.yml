@@ -1,0 +1,67 @@
+name: Test additional inputs coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report
+        run: |
+          mkdir -p hardened/tests/fixtures/junit
+          cat > hardened/tests/fixtures/junit/TEST-additional.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="AdditionalSuite" tests="2" failures="0" errors="0" skipped="0" time="0.5">
+            <testcase classname="com.example.AdditionalTest" name="testOne" time="0.2"/>
+            <testcase classname="com.example.AdditionalTest" name="testTwo" time="0.3"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github_token: ${{ github.token }}
+          report_paths: 'hardened/tests/fixtures/junit/TEST-additional.xml'
+          check_name: 'Additional Inputs Test Report'
+          check_title_template: '{{SUITE_NAME}} / {{TEST_NAME}}'
+          exclude_sources: 'src/generated,build'
+          annotations_limit: '50'
+          skip_annotations: 'true'
+          commit: ${{ github.sha }}
+          pr_id: ''
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "actual total: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected total=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "actual passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "actual failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected failed=0, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

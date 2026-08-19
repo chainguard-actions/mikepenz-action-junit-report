@@ -1,0 +1,81 @@
+name: Test JUnit report with skipped tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with skipped tests
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-skipped.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites name="AllTests" tests="4" failures="0" errors="0" skipped="2" time="1.800">
+            <testsuite name="com.example.SkippedTests" tests="4" failures="0" errors="0" skipped="2" time="1.800">
+              <testcase name="testPass1" classname="com.example.SkippedTests" time="0.500"/>
+              <testcase name="testPass2" classname="com.example.SkippedTests" time="0.500"/>
+              <testcase name="testSkip1" classname="com.example.SkippedTests" time="0.400">
+                <skipped message="Test skipped: feature not available"/>
+              </testcase>
+              <testcase name="testSkip2" classname="com.example.SkippedTests" time="0.400">
+                <skipped message="Test skipped: environment not configured"/>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: junit
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-*.xml'
+          check_name: 'Skipped Tests Report'
+          fail_on_failure: 'false'
+          include_skipped: 'true'
+          annotate_only: 'true'
+          job_summary: 'true'
+
+      - name: Assert total count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "4" ]; then
+            echo "FAIL: expected total=4, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert passed count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.passed }}
+        run: |
+          echo "passed: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert skipped count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.skipped }}
+        run: |
+          echo "skipped: $ACTUAL"
+          if [ "$ACTUAL" != "2" ]; then
+            echo "FAIL: expected skipped=2, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count
+        env:
+          ACTUAL: ${{ steps.junit.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "0" ]; then
+            echo "FAIL: expected failed=0, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"

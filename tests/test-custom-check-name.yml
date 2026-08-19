@@ -1,0 +1,83 @@
+name: Test custom check name and detailed summary
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-custom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuites name="CustomSuite" tests="5" failures="1" errors="0" time="3.000">
+            <testsuite name="com.example.CustomTests" tests="5" failures="1" errors="0" time="3.000">
+              <testcase name="alpha" classname="com.example.CustomTests" time="0.500"/>
+              <testcase name="beta" classname="com.example.CustomTests" time="0.500"/>
+              <testcase name="gamma" classname="com.example.CustomTests" time="0.500"/>
+              <testcase name="delta" classname="com.example.CustomTests" time="0.500"/>
+              <testcase name="epsilon" classname="com.example.CustomTests" time="1.000">
+                <failure message="epsilon failed" type="AssertionError">
+                  AssertionError: epsilon failed
+                </failure>
+              </testcase>
+            </testsuite>
+          </testsuites>
+          EOF
+
+      - id: junit
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-*.xml'
+          check_name: 'My Custom Check Name'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          job_summary: 'true'
+          detailed_summary: 'true'
+          include_passed: 'true'
+
+      - name: Assert total count is 5
+        env:
+          ACTUAL: ${{ steps.junit.outputs.total }}
+        run: |
+          echo "total: $ACTUAL"
+          if [ "$ACTUAL" != "5" ]; then
+            echo "FAIL: expected total=5, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert failed count is 1
+        env:
+          ACTUAL: ${{ steps.junit.outputs.failed }}
+        run: |
+          echo "failed: $ACTUAL"
+          if [ "$ACTUAL" != "1" ]; then
+            echo "FAIL: expected failed=1, got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert detailed_summary output is non-empty
+        env:
+          ACTUAL: ${{ steps.junit.outputs.detailed_summary }}
+        run: |
+          echo "detailed_summary length: ${#ACTUAL}"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected non-empty detailed_summary"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert summary output is non-empty
+        env:
+          ACTUAL: ${{ steps.junit.outputs.summary }}
+        run: |
+          echo "summary: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: expected non-empty summary"
+            exit 1
+          fi
+          echo "PASS"
