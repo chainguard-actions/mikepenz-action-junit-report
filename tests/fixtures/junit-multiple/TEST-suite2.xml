@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Suite Two" tests="2" failures="1" errors="0" skipped="0" time="1.000">
+  <testsuite name="com.example.SuiteTwo" tests="2" failures="1" errors="0" skipped="0" time="1.000">
+    <testcase name="testA" classname="com.example.SuiteTwo" time="0.400"/>
+    <testcase name="testB" classname="com.example.SuiteTwo" time="0.600">
+      <failure message="Suite Two failure" type="AssertionError">
+        Suite Two failure
+          at com.example.SuiteTwo.testB(SuiteTwo.java:20)
+      </failure>
+    </testcase>
+  </testsuite>
+</testsuites>

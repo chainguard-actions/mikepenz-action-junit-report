@@ -1,0 +1,42 @@
+name: Test check_retries ignores original failure
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '${{ github.workspace }}/tests/fixtures/junit-retries/TEST-retry-attempt1.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'true'
+          check_retries: 'true'
+          check_name: 'Retry Test Report'
+          job_summary: 'false'
+          flaky_summary: 'true'
+          skip_annotations: 'true'
+
+      - name: Assert action succeeded (retried test should not cause failure)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed when check_retries=true and test passed on retry, got outcome='$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action succeeded with check_retries enabled"
+
+      - name: Assert total count
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $TOTAL"
+          if [ -z "$TOTAL" ]; then
+            echo "FAIL: expected non-empty total"
+            exit 1
+          fi
+          echo "PASS: total=$TOTAL"

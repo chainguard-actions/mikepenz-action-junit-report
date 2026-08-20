@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Test Suite" tests="4" failures="2" errors="0" skipped="1" time="2.500">
+  <testsuite name="com.example.MixedTests" tests="4" failures="2" errors="0" skipped="1" time="2.500">
+    <testcase name="testPass" classname="com.example.MixedTests" time="0.500"/>
+    <testcase name="testFail1" classname="com.example.MixedTests" time="0.600">
+      <failure message="AssertionError: expected true but was false" type="AssertionError">
+        AssertionError: expected true but was false
+          at com.example.MixedTests.testFail1(MixedTests.java:25)
+      </failure>
+    </testcase>
+    <testcase name="testFail2" classname="com.example.MixedTests" time="0.700">
+      <failure message="NullPointerException" type="NullPointerException">
+        NullPointerException
+          at com.example.MixedTests.testFail2(MixedTests.java:40)
+      </failure>
+    </testcase>
+    <testcase name="testSkip" classname="com.example.MixedTests" time="0.000">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

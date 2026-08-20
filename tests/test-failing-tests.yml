@@ -1,0 +1,63 @@
+name: Test JUnit report with failing tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '${{ github.workspace }}/tests/fixtures/junit-failing/TEST-*.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          check_name: 'Failing Tests Report'
+          job_summary: 'false'
+          include_skipped: 'true'
+          skip_annotations: 'true'
+
+      - name: Assert total count
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $TOTAL"
+          if [ "$TOTAL" != "4" ]; then
+            echo "FAIL: expected total=4, got '$TOTAL'"
+            exit 1
+          fi
+          echo "PASS: total=4"
+
+      - name: Assert failed count
+        env:
+          FAILED: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $FAILED"
+          if [ "$FAILED" != "2" ]; then
+            echo "FAIL: expected failed=2, got '$FAILED'"
+            exit 1
+          fi
+          echo "PASS: failed=2"
+
+      - name: Assert skipped count
+        env:
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "skipped: $SKIPPED"
+          if [ "$SKIPPED" != "1" ]; then
+            echo "FAIL: expected skipped=1, got '$SKIPPED'"
+            exit 1
+          fi
+          echo "PASS: skipped=1"
+
+      - name: Assert passed count
+        env:
+          PASSED: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $PASSED"
+          if [ "$PASSED" != "1" ]; then
+            echo "FAIL: expected passed=1, got '$PASSED'"
+            exit 1
+          fi
+          echo "PASS: passed=1"

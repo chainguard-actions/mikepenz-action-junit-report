@@ -1,0 +1,152 @@
+name: 'CI'
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    if: github.event_name  == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Install NPM
+        run: |
+          npm install
+      - name: Run NPM
+        run: |
+          npm run all
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    if: github.event_name  == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+
+      - name: Test JUnit test import
+        uses: ./
+        with:
+          check_name: Example JUnit Test Report
+          report_paths: '**/surefire-reports/TEST-*.xml'
+          include_passed: true
+          include_skipped: false
+          detailed_summary: true
+          summary: '<table><thead><tr><th> Application (src/applications) </th></tr></thead><tbody><tr><td> test </td></tr></tbody></table>'
+          job_summary_text: |
+            # Test Header for Example Junit Test Report
+            
+            This is some custom body to show in the summary.
+          check_title_template: '{{SUITE_NAME}} | {{TEST_NAME}}'
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test PyTest test import
+        uses: ./
+        with:
+          check_name: Example Pytest Report
+          report_paths: test_results/python/report_flaky.xml
+          include_passed: true
+          detailed_summary: true
+          comment: true
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Ungrouped test import
+        uses: ./
+        with:
+          check_name: Example Ungrouped Test Report
+          report_paths: test_results/multiple/*.xml
+          verbose_summary: false
+          include_passed: true
+          detailed_summary: false
+          group_reports: false
+          comment: true
+
+      - name: Test JUnit flaky test import
+        uses: ./
+        with:
+          check_name: Example JUnit Flaky Report
+          report_paths: test_results/junit-web-test/expectedRetries.xml
+          include_passed: true
+          check_retries: true
+          job_summary: true
+          detailed_summary: true
+          flaky_summary: true
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Multi test import
+        uses: ./
+        with:
+          check_name: |-
+            Example Multi JUnit Test Report
+            Example Multi Pytest Report
+          report_paths: |-
+            **/surefire-reports/TEST-*.xml
+            test_results/python/report.xml
+          summary: |-
+            <table><thead><tr><th> Application (src/applications) </th></tr></thead><tbody><tr><td> multi test </td></tr></tbody></table>
+            Custom Summary
+          check_title_template: |-
+            {{SUITE_NAME}} | {{TEST_NAME}}
+            \n
+          transformers: |
+            [{"searchValue":"::","replaceValue":"/"}]
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Test Nested JUnit test import
+        uses: ./
+        with:
+          check_name: Example Nested JUnit Test Report
+          report_paths: 'test_results/nested/multi-level.xml'
+          include_passed: true
+          detailed_summary: true
+          group_suite: true
+          comment: true
+          skip_annotations: true
+          check_title_template: '{{TEST_NAME}}'
+          annotate_only: ${{ github.event_name == 'workflow_dispatch' }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: "Build Changelog"
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@c9bcd8238b6f41e05561348339429d360b1c0247 # v6
+        with:
+          configuration: ".github/config/configuration.json"
+          ignorePreReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: mikepenz/action-gh-release@9a604afa5167a745eab07256a54e2f578a1a0c5e # v1
+        with:
+          body: ${{steps.github_release.outputs.changelog}}
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

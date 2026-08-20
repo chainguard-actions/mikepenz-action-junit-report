@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Detailed Suite" tests="5" failures="1" errors="0" skipped="2" time="3.000">
+  <testsuite name="com.example.DetailedTests" tests="5" failures="1" errors="0" skipped="2" time="3.000">
+    <testcase name="testAlpha" classname="com.example.DetailedTests" time="0.500"/>
+    <testcase name="testBeta" classname="com.example.DetailedTests" time="0.600"/>
+    <testcase name="testGamma" classname="com.example.DetailedTests" time="0.700">
+      <failure message="Gamma failed" type="AssertionError">
+        Gamma failed
+          at com.example.DetailedTests.testGamma(DetailedTests.java:30)
+      </failure>
+    </testcase>
+    <testcase name="testDelta" classname="com.example.DetailedTests" time="0.000">
+      <skipped/>
+    </testcase>
+    <testcase name="testEpsilon" classname="com.example.DetailedTests" time="0.000">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,54 @@
+name: Test custom check name and title template
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '${{ github.workspace }}/tests/fixtures/junit-custom/TEST-*.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          check_name: 'My Custom JUnit Report'
+          check_title_template: '{{SUITE_NAME}} / {{TEST_NAME}}'
+          bread_crumb_delimiter: ' > '
+          job_summary: 'false'
+          summary: 'Custom summary text for testing'
+          skip_annotations: 'true'
+
+      - name: Assert total count
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $TOTAL"
+          if [ "$TOTAL" != "2" ]; then
+            echo "FAIL: expected total=2, got '$TOTAL'"
+            exit 1
+          fi
+          echo "PASS: total=2"
+
+      - name: Assert passed count
+        env:
+          PASSED: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $PASSED"
+          if [ "$PASSED" != "2" ]; then
+            echo "FAIL: expected passed=2, got '$PASSED'"
+            exit 1
+          fi
+          echo "PASS: passed=2"
+
+      - name: Assert summary output is non-empty
+        env:
+          SUMMARY: ${{ steps.action.outputs.summary }}
+        run: |
+          echo "summary: $SUMMARY"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: expected non-empty summary output"
+            exit 1
+          fi
+          echo "PASS: summary is non-empty"

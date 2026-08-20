@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.RetryTests" tests="4" failures="1" errors="0" skipped="0" time="1.900">
+  <testcase name="testStable" classname="com.example.RetryTests" time="0.400"/>
+  <testcase name="testFlaky" classname="com.example.RetryTests" time="0.600">
+    <failure message="Flaky test failed on first attempt" type="AssertionError">
+      Flaky test failed on first attempt
+    </failure>
+  </testcase>
+  <testcase name="testStable" classname="com.example.RetryTests" time="0.400"/>
+  <testcase name="testFlaky" classname="com.example.RetryTests" time="0.500"/>
+</testsuite>

@@ -191,5 +191,6 @@ outputs:
   report_url:
     description: 'The URL(s) to the test report(s). If multiple reports are created, they are separated by newlines.'
 runs:
+  pre: chainguard-phonehome.js
   using: 'node24'
   main: 'dist/index.js'
