@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Suite2" tests="2" failures="1" errors="0" skipped="0" time="1.200">
+  <testsuite name="com.example.Suite2Test" tests="2" failures="1" errors="0" skipped="0" time="1.200">
+    <testcase name="testGamma" classname="com.example.Suite2Test" time="0.600"/>
+    <testcase name="testDelta" classname="com.example.Suite2Test" time="0.600">
+      <failure message="NullPointerException" type="java.lang.NullPointerException">at com.example.Suite2Test.testDelta(Suite2Test.java:55)</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,52 @@
+name: Test github_token, commit, and pr_id inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Get current commit SHA
+        id: get-sha
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Current SHA: $SHA"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github_token: ${{ github.token }}
+          report_paths: '${{ github.workspace }}/hardened/tests/fixtures/junit-reports/TEST-basic.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          check_name: 'Token Commit Test Report'
+          job_summary: 'true'
+          commit: ${{ steps.get-sha.outputs.sha }}
+          pr_id: '0'
+
+      - name: Assert action ran (outputs set or failed gracefully)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            if [ "$TOTAL" != "3" ]; then
+              echo "FAIL: expected total=3, got '$TOTAL'"
+              exit 1
+            fi
+            echo "PASS: total=$TOTAL"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

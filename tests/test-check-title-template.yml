@@ -1,0 +1,52 @@
+name: Test check title template
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '${{ github.workspace }}/hardened/tests/fixtures/junit-reports/TEST-basic.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          check_name: 'Title Template Test Report'
+          job_summary: 'true'
+          check_title_template: '{{SUITE_NAME}} / {{TEST_NAME}}'
+          bread_crumb_delimiter: ' > '
+
+      - name: Assert total count
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $TOTAL"
+          if [ "$TOTAL" != "3" ]; then
+            echo "FAIL: expected total=3, got '$TOTAL'"
+            exit 1
+          fi
+          echo "PASS: total=$TOTAL"
+
+      - name: Assert passed count
+        env:
+          PASSED: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $PASSED"
+          if [ "$PASSED" != "3" ]; then
+            echo "FAIL: expected passed=3, got '$PASSED'"
+            exit 1
+          fi
+          echo "PASS: passed=$PASSED"
+
+      - name: Assert summary is non-empty
+        env:
+          SUMMARY: ${{ steps.action.outputs.summary }}
+        run: |
+          echo "summary: $SUMMARY"
+          if [ -z "$SUMMARY" ]; then
+            echo "FAIL: expected non-empty summary"
+            exit 1
+          fi
+          echo "PASS: summary is non-empty"

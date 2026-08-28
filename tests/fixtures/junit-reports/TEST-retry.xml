@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="RetryTests" tests="2" failures="1" errors="0" skipped="0" time="0.800">
+  <testsuite name="com.example.RetryTest" tests="2" failures="1" errors="0" skipped="0" time="0.800">
+    <testcase name="testFlaky" classname="com.example.RetryTest" time="0.500">
+      <failure message="Flaky failure" type="AssertionError">Intermittent failure</failure>
+    </testcase>
+    <testcase name="testFlaky" classname="com.example.RetryTest" time="0.300"/>
+  </testsuite>
+</testsuites>

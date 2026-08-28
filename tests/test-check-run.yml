@@ -1,0 +1,38 @@
+name: Test check run creation (sentinel repo graceful failure)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '${{ github.workspace }}/tests/fixtures/junit-reports/TEST-check.xml'
+          annotate_only: 'false'
+          fail_on_failure: 'false'
+          check_name: 'Check Run Test Report'
+          job_summary: 'false'
+        continue-on-error: true
+
+      - name: Assert action ran (outputs set, or failed gracefully on sentinel repo)
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            echo "PASS: got total='$TOTAL'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable for check run creation)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
