@@ -1,0 +1,75 @@
+name: Test multiple JUnit report files
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create multiple JUnit XML report files
+        run: |
+          mkdir -p /tmp/junit-multi
+          cat > /tmp/junit-multi/TEST-suite1.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="Suite1" tests="2" failures="0" errors="0" skipped="0" time="0.800">
+            <testcase name="test1" classname="com.example.Suite1" time="0.400"/>
+            <testcase name="test2" classname="com.example.Suite1" time="0.400"/>
+          </testsuite>
+          EOF
+
+          cat > /tmp/junit-multi/TEST-suite2.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="Suite2" tests="3" failures="1" errors="0" skipped="0" time="1.200">
+            <testcase name="test3" classname="com.example.Suite2" time="0.400"/>
+            <testcase name="test4" classname="com.example.Suite2" time="0.400"/>
+            <testcase name="test5" classname="com.example.Suite2" time="0.400">
+              <failure message="Test failed" type="AssertionError">
+                Assertion failed at line 10
+              </failure>
+            </testcase>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          report_paths: '/tmp/junit-multi/TEST-*.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          group_reports: 'true'
+          check_name: 'Multi-Report Test'
+          job_summary: 'true'
+
+      - name: Assert total count aggregated from both reports
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "total: $TOTAL"
+          if [ "$TOTAL" != "5" ]; then
+            echo "FAIL: expected total=5 (2+3), got '$TOTAL'"
+            exit 1
+          fi
+          echo "PASS: total=5"
+
+      - name: Assert passed count
+        env:
+          PASSED: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "passed: $PASSED"
+          if [ "$PASSED" != "4" ]; then
+            echo "FAIL: expected passed=4, got '$PASSED'"
+            exit 1
+          fi
+          echo "PASS: passed=4"
+
+      - name: Assert failed count
+        env:
+          FAILED: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "failed: $FAILED"
+          if [ "$FAILED" != "1" ]; then
+            echo "FAIL: expected failed=1, got '$FAILED'"
+            exit 1
+          fi
+          echo "PASS: failed=1"

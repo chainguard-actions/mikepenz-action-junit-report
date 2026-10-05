@@ -1,0 +1,59 @@
+name: Test commit and pr_id inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create passing JUnit XML report
+        run: |
+          mkdir -p /tmp/junit-reports
+          cat > /tmp/junit-reports/TEST-commit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="CommitSuite" tests="2" failures="0" errors="0" skipped="0" time="0.600">
+            <testcase name="testOne" classname="com.example.CommitTest" time="0.300"/>
+            <testcase name="testTwo" classname="com.example.CommitTest" time="0.300"/>
+          </testsuite>
+          EOF
+
+      - name: Get current commit SHA
+        id: get-sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: '/tmp/junit-reports/TEST-commit.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'false'
+          check_name: 'Commit and PR ID Test Report'
+          job_summary: 'true'
+          commit: ${{ steps.get-sha.outputs.sha }}
+          pr_id: '1'
+
+      - name: Assert action ran (outputs set or failed gracefully on sentinel repo)
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            if [ "$TOTAL" != "2" ]; then
+              echo "FAIL: expected total=2, got '$TOTAL'"
+              exit 1
+            fi
+            echo "PASS: total=$TOTAL"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,47 @@
+name: Test check_retries flag
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with retried test
+        run: |
+          mkdir -p /tmp/junit-reports
+          # A test that failed once but passed on retry (two testcase entries with same name)
+          cat > /tmp/junit-reports/TEST-retries.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="RetrySuite" tests="2" failures="1" errors="0" skipped="0" time="1.000">
+            <testcase name="testFlaky" classname="com.example.RetryClass" time="0.500">
+              <failure message="Flaky test failed on first attempt" type="AssertionError">
+                First attempt failed
+              </failure>
+            </testcase>
+            <testcase name="testFlaky" classname="com.example.RetryClass" time="0.500"/>
+          </testsuite>
+          EOF
+
+      - id: action-with-retries
+        uses: .
+        with:
+          report_paths: '/tmp/junit-reports/TEST-*.xml'
+          annotate_only: 'true'
+          fail_on_failure: 'true'
+          check_retries: 'true'
+          check_name: 'Retry Test Report'
+          job_summary: 'true'
+
+      - name: Assert action succeeded (retry ignored original failure)
+        env:
+          OUTCOME: ${{ steps.action-with-retries.outcome }}
+          TOTAL: ${{ steps.action-with-retries.outputs.total }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed when check_retries=true and test passed on retry, got outcome='$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action correctly succeeded with check_retries=true"
