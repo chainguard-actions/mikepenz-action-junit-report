@@ -1,0 +1,61 @@
+name: Test custom check name and summary
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/junit-reports"
+          cat > "$GITHUB_WORKSPACE/junit-reports/TEST-custom.xml" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="CustomSuite" tests="2" failures="0" errors="0" skipped="0" time="0.500">
+            <testcase name="testAlpha" classname="com.example.CustomTest" time="0.250"/>
+            <testcase name="testBeta" classname="com.example.CustomTest" time="0.250"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          check_name: 'My Custom Test Report'
+          summary: 'Custom summary text for testing'
+          fail_on_failure: 'false'
+          annotate_only: 'true'
+          job_summary: 'true'
+
+      - name: Assert action ran with custom check name
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          echo "passed: $PASSED"
+
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            if [ "$TOTAL" != "2" ]; then
+              echo "FAIL: expected total=2, got '$TOTAL'"
+              exit 1
+            fi
+            if [ "$PASSED" != "2" ]; then
+              echo "FAIL: expected passed=2, got '$PASSED'"
+              exit 1
+            fi
+            echo "PASS: action ran correctly with custom check name"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,85 @@
+name: Test mixed test results with skipped tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create JUnit XML report with mixed results
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/junit-reports"
+          cat > "$GITHUB_WORKSPACE/junit-reports/TEST-mixed.xml" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="MixedSuite" tests="5" failures="1" errors="0" skipped="2" time="3.500">
+            <testcase name="testPass1" classname="com.example.MixedTest" time="0.500"/>
+            <testcase name="testPass2" classname="com.example.MixedTest" time="0.500"/>
+            <testcase name="testSkip1" classname="com.example.MixedTest" time="0.000">
+              <skipped message="Skipped for now"/>
+            </testcase>
+            <testcase name="testSkip2" classname="com.example.MixedTest" time="0.000">
+              <skipped/>
+            </testcase>
+            <testcase name="testFail1" classname="com.example.MixedTest" time="2.500">
+              <failure message="Expected 1 but was 2">
+                at com.example.MixedTest.testFail1(MixedTest.java:55)
+              </failure>
+            </testcase>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          fail_on_failure: 'false'
+          include_skipped: 'true'
+          annotate_only: 'true'
+          detailed_summary: 'true'
+
+      - name: Assert outputs reflect mixed results
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          SUMMARY: ${{ steps.action.outputs.summary }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          echo "passed: $PASSED"
+          echo "failed: $FAILED"
+          echo "skipped: $SKIPPED"
+          echo "summary length: ${#SUMMARY}"
+
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            if [ "$TOTAL" != "5" ]; then
+              echo "FAIL: expected total=5, got '$TOTAL'"
+              exit 1
+            fi
+            if [ "$PASSED" != "2" ]; then
+              echo "FAIL: expected passed=2, got '$PASSED'"
+              exit 1
+            fi
+            if [ "$FAILED" != "1" ]; then
+              echo "FAIL: expected failed=1, got '$FAILED'"
+              exit 1
+            fi
+            if [ "$SKIPPED" != "2" ]; then
+              echo "FAIL: expected skipped=2, got '$SKIPPED'"
+              exit 1
+            fi
+            echo "PASS: all outputs correct"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

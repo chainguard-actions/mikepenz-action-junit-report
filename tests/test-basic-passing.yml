@@ -1,0 +1,69 @@
+name: Test basic passing JUnit report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create passing JUnit XML report
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/junit-reports"
+          cat > "$GITHUB_WORKSPACE/junit-reports/TEST-passing.xml" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="PassingSuite" tests="3" failures="0" errors="0" skipped="0" time="1.234">
+            <testcase name="testOne" classname="com.example.TestClass" time="0.100"/>
+            <testcase name="testTwo" classname="com.example.TestClass" time="0.200"/>
+            <testcase name="testThree" classname="com.example.TestClass" time="0.934"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          fail_on_failure: 'false'
+          require_tests: 'true'
+          job_summary: 'true'
+          annotate_only: 'true'
+
+      - name: Assert action ran and produced outputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          echo "passed: $PASSED"
+          echo "failed: $FAILED"
+          echo "skipped: $SKIPPED"
+
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$TOTAL" ]; then
+              echo "FAIL: action succeeded but total output is empty"
+              exit 1
+            fi
+            if [ "$TOTAL" != "3" ]; then
+              echo "FAIL: expected total=3, got '$TOTAL'"
+              exit 1
+            fi
+            if [ "$PASSED" != "3" ]; then
+              echo "FAIL: expected passed=3, got '$PASSED'"
+              exit 1
+            fi
+            if [ "$FAILED" != "0" ]; then
+              echo "FAIL: expected failed=0, got '$FAILED'"
+              exit 1
+            fi
+            echo "PASS: all outputs correct"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

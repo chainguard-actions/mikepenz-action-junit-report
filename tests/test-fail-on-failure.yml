@@ -1,0 +1,52 @@
+name: Test fail_on_failure with failing tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create failing JUnit XML report
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/junit-reports"
+          cat > "$GITHUB_WORKSPACE/junit-reports/TEST-failing.xml" << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="FailingSuite" tests="3" failures="1" errors="0" skipped="0" time="2.000">
+            <testcase name="testOne" classname="com.example.TestClass" time="0.500"/>
+            <testcase name="testTwo" classname="com.example.TestClass" time="0.500">
+              <failure message="AssertionError: expected true but was false">
+                at com.example.TestClass.testTwo(TestClass.java:42)
+              </failure>
+            </testcase>
+            <testcase name="testThree" classname="com.example.TestClass" time="1.000"/>
+          </testsuite>
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: '**/junit-reports/TEST-*.xml'
+          fail_on_failure: 'true'
+          annotate_only: 'true'
+
+      - name: Assert action failed due to test failures
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+          FAILED: ${{ steps.action.outputs.failed }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "total: $TOTAL"
+          echo "failed: $FAILED"
+
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed because fail_on_failure=true and tests failed"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "FAIL: action should have failed because fail_on_failure=true and there are failing tests"
+            exit 1
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
