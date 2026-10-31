@@ -1,0 +1,27 @@
+name: Test detailed summary with passed tests
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          report_paths: 'tests/fixtures/mixed/*.xml'
+          annotate_only: 'true'
+          include_passed: 'true'
+          detailed_summary: 'true'
+      - name: Assert detailed summary content
+        env:
+          DETAILED: ${{ steps.action.outputs.detailed_summary }}
+        run: |
+          echo "detailed: $DETAILED"
+          for name in testOk1 testOk2 testBroken; do
+            if ! echo "$DETAILED" | grep -q "$name"; then
+              echo "FAIL: detailed summary missing $name"
+              exit 1
+            fi
+          done
+          echo "PASS"

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="MixedSuite" tests="4" failures="1" errors="0" skipped="1" time="1.0">
+    <testcase name="testOk1" classname="com.example.MixedSuite" time="0.1"/>
+    <testcase name="testOk2" classname="com.example.MixedSuite" time="0.2"/>
+    <testcase name="testBroken" classname="com.example.MixedSuite" time="0.3">
+      <failure message="expected 1 but was 2" type="AssertionError">AssertionError: expected 1 but was 2
+    at com.example.MixedSuite.testBroken(MixedSuite.java:42)</failure>
+    </testcase>
+    <testcase name="testIgnored" classname="com.example.MixedSuite" time="0.0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

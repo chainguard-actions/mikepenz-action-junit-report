@@ -1,0 +1,29 @@
+name: Test basic passing report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          report_paths: 'tests/fixtures/passing/*.xml'
+          annotate_only: 'true'
+      - name: Assert counts
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          FAILED: ${{ steps.action.outputs.failed }}
+          SKIPPED: ${{ steps.action.outputs.skipped }}
+          SUMMARY: ${{ steps.action.outputs.summary }}
+        run: |
+          echo "total=$TOTAL passed=$PASSED failed=$FAILED skipped=$SKIPPED"
+          echo "summary: $SUMMARY"
+          [ "$TOTAL" = "3" ] || { echo "FAIL: total expected 3"; exit 1; }
+          [ "$PASSED" = "3" ] || { echo "FAIL: passed expected 3"; exit 1; }
+          [ "$FAILED" = "0" ] || { echo "FAIL: failed expected 0"; exit 1; }
+          [ "$SKIPPED" = "0" ] || { echo "FAIL: skipped expected 0"; exit 1; }
+          if [ -z "$SUMMARY" ]; then echo "FAIL: summary empty"; exit 1; fi
+          echo "PASS"

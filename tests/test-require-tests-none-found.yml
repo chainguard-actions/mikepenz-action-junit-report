@@ -1,0 +1,24 @@
+name: Test require_tests with no reports found
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          report_paths: 'tests/fixtures/does-not-exist/*.xml'
+          annotate_only: 'true'
+          require_tests: 'true'
+      - name: Assert step failed with zero totals
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          TOTAL: ${{ steps.action.outputs.total }}
+        run: |
+          echo "outcome=$OUTCOME total=$TOTAL"
+          [ "$OUTCOME" = "failure" ] || { echo "FAIL: expected failure outcome"; exit 1; }
+          [ "$TOTAL" = "0" ] || { echo "FAIL: total expected 0"; exit 1; }
+          echo "PASS"
