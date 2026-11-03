@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="com.example.PassingTest" tests="3" failures="0" errors="0" skipped="0" time="0.30">
+    <testcase name="testAlpha" classname="com.example.PassingTest" time="0.10"/>
+    <testcase name="testBeta" classname="com.example.PassingTest" time="0.10"/>
+    <testcase name="testGamma" classname="com.example.PassingTest" time="0.10"/>
+  </testsuite>
+</testsuites>

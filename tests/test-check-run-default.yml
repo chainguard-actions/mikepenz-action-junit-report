@@ -1,0 +1,23 @@
+name: Test default check-run mode (check creation may fail on sentinel repo)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          report_paths: 'tests/fixtures/passing/TEST-*.xml'
+      - name: Assert outputs set (check API errors are handled internally)
+        env:
+          TOTAL: ${{ steps.action.outputs.total }}
+          PASSED: ${{ steps.action.outputs.passed }}
+          SUMMARY: ${{ steps.action.outputs.summary }}
+        run: |
+          echo "total=$TOTAL passed=$PASSED"
+          [ "$TOTAL" = "3" ] || { echo "FAIL: total expected 3"; exit 1; }
+          [ "$PASSED" = "3" ] || { echo "FAIL: passed expected 3"; exit 1; }
+          [ -n "$SUMMARY" ] || { echo "FAIL: summary empty"; exit 1; }
+          echo "PASS"
