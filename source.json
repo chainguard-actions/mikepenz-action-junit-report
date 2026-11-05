@@ -4,8 +4,13 @@
   "version": "v6.6.2",
   "commit_sha": "8a133bfa3ecb0ea9024c1e2ae788b4c25f6cdb9d",
   "url": "https://github.com/mikepenz/action-junit-report",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/mikepenz/action-junit-report/v6.6.2/sha256-28b47a4f462923f35e94217951a852d6dc6d2d3fc1ae942d9596e8cb78de1c3e.tar.gz",
+    "sha256": "28b47a4f462923f35e94217951a852d6dc6d2d3fc1ae942d9596e8cb78de1c3e",
+    "size_bytes": 1175318
+  }
 }
