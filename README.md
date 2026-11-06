@@ -16,6 +16,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v6.6.1 | [`v6.6.1`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.6.1) | [`6ef3fdc`](https://github.com/mikepenz/action-junit-report/commit/6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d) | — |
 | v6.6.2 | [`v6.6.2`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.6.2) | [`8a133bf`](https://github.com/mikepenz/action-junit-report/commit/8a133bfa3ecb0ea9024c1e2ae788b4c25f6cdb9d) | [`HARDENING.md`](https://github.com/chainguard-actions/mikepenz-action-junit-report/blob/v6.6.2/HARDENING.md) |
 | v6.7.0 | [`v6.7.0`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.7.0) | [`4a26df3`](https://github.com/mikepenz/action-junit-report/commit/4a26df3e2ae132254ba12a53f65a388d0961e786) | [`HARDENING.md`](https://github.com/chainguard-actions/mikepenz-action-junit-report/blob/v6.7.0/HARDENING.md) |
+| v6.7.1 | [`v6.7.1`](https://github.com/chainguard-actions/mikepenz-action-junit-report/tree/v6.7.1) | [`a16be3a`](https://github.com/mikepenz/action-junit-report/commit/a16be3a69023e9bd7e748ede768b3282ea7b30ce) | [`HARDENING.md`](https://github.com/chainguard-actions/mikepenz-action-junit-report/blob/v6.7.1/HARDENING.md) |
 
 ## Privacy
 
