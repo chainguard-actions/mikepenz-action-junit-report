@@ -1,6 +1,16 @@
 {
   "owner": "mikepenz",
   "repo": "action-junit-report",
-  "version": "",
-  "url": "https://github.com/mikepenz/action-junit-report"
+  "version": "v6.7.1",
+  "commit_sha": "a16be3a69023e9bd7e748ede768b3282ea7b30ce",
+  "url": "https://github.com/mikepenz/action-junit-report",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/mikepenz/action-junit-report/v6.7.1/sha256-d27fdd600442f053fee22194e3f3e40cd842b90984ebb023e48449c8d56ee60d.tar.gz",
+    "sha256": "d27fdd600442f053fee22194e3f3e40cd842b90984ebb023e48449c8d56ee60d",
+    "size_bytes": 1180963
+  }
 }
